@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>City Actor: Pro Runner Funny game</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Bebas+Neue&display=swap');
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            height: 100%;
+        }
+
+        body {
+            background: #020617;
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+            touch-action: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            height: 100%;
+        }
+
+        .viewport {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            max-width: 450px;
+            background: #000;
+            overflow: hidden;
+            box-shadow: 0 0 120px rgba(0, 0, 0, 0.8);
+        }
+
+        @media (min-width: 768px) {
+            .viewport {
+                border-radius: 40px;
+            }
+        }
+
+        @media (max-width: 425px) {
+            body {
+                overflow: auto;
+                height: auto;
+                padding: 10px 0;
+            }
+
+            .viewport {
+                max-width: 100%;
+                min-height: 100vh;
+                height: auto;
+                border-radius: 0;
+            }
+
+            #start-screen,
+            #game-over-screen {
+                padding: 14px 12px;
+            }
+
+            .w-full.max-w-sm {
+                max-width: 100%;
+                padding: 0 6px;
+            }
+
+            .text-7xl {
+                font-size: 2.75rem;
+                line-height: 1;
+            }
+
+            .glass-card {
+                padding: 14px;
+            }
+
+            .lang-btn {
+                font-size: 0.7rem;
+                padding: 0.8rem 0.75rem;
+            }
+
+            .skip-btn {
+                padding: 8px 14px;
+                font-size: 0.9rem;
+                top: 12px;
+                right: 12px;
+            }
+
+            .reel-action-btn {
+                width: 42px;
+                height: 42px;
+                font-size: 18px;
+            }
+
+            .reel-actions {
+                right: 10px;
+                bottom: 80px;
+                gap: 12px;
+            }
+
+            .reel-overlay {
+                padding: 14px;
+            }
+
+            .reel-overlay p {
+                font-size: 0.95rem;
+            }
+
+            .text-base {
+                font-size: 0.95rem;
+            }
+
+            .grid.grid-cols-2 {
+                grid-template-columns: 1fr;
+            }
+
+            .text-5xl {
+                font-size: 2.5rem;
+            }
+
+            .text-3xl {
+                font-size: 2rem;
+            }
+
+            .text-xl {
+                font-size: 1.05rem;
+            }
+
+            .glass-card p,
+            .glass-card div {
+                font-size: 0.9rem;
+            }
+
+            .skip-btn,
+            .reel-action-btn,
+            button[onclick="initGame()"] {
+                min-touch-action: manipulation;
+            }
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .font-retro {
+            font-family: 'Bebas Neue', cursive;
+        }
+
+        #reel-container {
+            position: absolute;
+            inset: 0;
+            z-index: 100;
+            background: #000;
+            display: none;
+        }
+
+        #reel-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .reel-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 20px;
+            background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+            z-index: 101;
+        }
+
+        .reel-actions {
+            position: absolute;
+            right: 16px;
+            bottom: 100px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            z-index: 102;
+        }
+
+        .reel-action-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .reel-action-btn:active {
+            transform: scale(0.9);
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        .skip-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 103;
+            backdrop-filter: blur(10px);
+        }
+
+        @keyframes pulse-glow {
+
+            0%,
+            100% {
+                box-shadow: 0 0 20px rgba(14, 165, 233, 0.3);
+            }
+
+            50% {
+                box-shadow: 0 0 40px rgba(14, 165, 233, 0.6);
+            }
+        }
+
+        .lang-btn {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .lang-btn.active {
+            background: linear-gradient(135deg, #0ea5e9, #0284c7);
+            border-color: #38bdf8;
+            transform: scale(1.05);
+            animation: pulse-glow 2s infinite;
+        }
+
+        .glass-card {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        .neon-text {
+            text-shadow: 0 0 20px rgba(14, 165, 233, 0.5), 0 0 40px rgba(14, 165, 233, 0.3);
+        }
+
+        .slide-up {
+            animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="viewport">
+        <canvas id="game"></canvas>
+
+        <!-- REEL PLAYER -->
+        <div id="reel-container">
+            <video id="reel-video" loop playsinline webkit-playsinline preload="auto"></video>
+            <button class="skip-btn" onclick="skipReel()">SKIP ⏭️</button>
+            <div class="reel-actions">
+                <button class="reel-action-btn" onclick="likeReel()">❤️</button>
+                <button class="reel-action-btn" onclick="shareReel()">↗️</button>
+                <button class="reel-action-btn" onclick="skipReel()">⏭️</button>
+            </div>
+            <div class="reel-overlay">
+                <p class="text-white font-bold text-lg" id="reel-caption">Funny Fail Reel 😂</p>
+                <p class="text-slate-300 text-sm" id="reel-lang-indicator"></p>
+            </div>
+        </div>
+
+        <!-- START SCREEN -->
+        <div id="start-screen" class="absolute inset-0 flex flex-col items-center justify-center z-50 p-6"
+            style="background: radial-gradient(ellipse at center, rgba(15,23,42,0.95) 0%, rgba(2,6,23,0.98) 100%);">
+            <div class="w-full max-w-sm mx-auto slide-up">
+                <div class="text-center mb-8">
+                    <h1 class="text-white text-7xl font-retro leading-none mb-2 neon-text">CITY<br>ACTOR</h1>
+                    <div class="flex items-center justify-center gap-3">
+                        <div class="h-px flex-1 bg-gradient-to-r from-transparent via-sky-400 to-transparent"></div>
+                        <p class="text-sky-400 font-bold uppercase tracking-[0.4em] text-[10px]">Pro Runner</p>
+                        <div class="h-px flex-1 bg-gradient-to-r from-transparent via-sky-400 to-transparent"></div>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-3 text-center">🎙️ Audio
+                        Language</p>
+                    <div class="flex gap-2">
+                        <button id="lang-urdu" onclick="selectLanguage('urdu')"
+                            class="lang-btn active flex-1 bg-slate-800/80 border-2 border-sky-500 text-white font-bold py-3 px-4 rounded-2xl uppercase text-xs tracking-wider backdrop-blur-sm">
+                            🇵🇰 Urdu
+                        </button>
+                        <button id="lang-pashto" onclick="selectLanguage('pashto')"
+                            class="lang-btn flex-1 bg-slate-800/80 border-2 border-slate-600 text-slate-400 font-bold py-3 px-4 rounded-2xl uppercase text-xs tracking-wider backdrop-blur-sm">
+                            🇦🇫 Pashto
+                        </button>
+                    </div>
+                </div>
+
+
+                <div class="mb-4">
+                    <input type="text" id="player-name" placeholder="ENTER YOUR NAME"
+                        class="w-full p-4 rounded-2xl bg-slate-800/60 border-2 border-slate-700 text-white text-center outline-none focus:border-sky-500 text-base font-bold uppercase backdrop-blur-sm transition-all placeholder:text-slate-500">
+                </div>
+
+                <button onclick="initGame()"
+                    class="w-full bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-black py-5 rounded-2xl shadow-[0_8px_0_#0369a1] active:translate-y-1 active:shadow-[0_4px_0_#0369a1] transition-all text-xl uppercase tracking-wider">
+                    ▶ START ACTION
+                </button>
+
+                <div class="mt-6 glass-card rounded-2xl p-4 flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span class="text-2xl">🏆</span>
+                        <span class="text-slate-300 text-xs font-bold uppercase tracking-wider">Best Record</span>
+                    </div>
+                    <div class="flex items-baseline gap-1">
+                        <span id="high-score-value" class="text-yellow-400 text-2xl font-black">0</span>
+                        <span class="text-yellow-400/70 text-xs font-bold">KM</span>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-4 text-slate-400 text-[10px] uppercase tracking-[0.4em]">
+                Developed by <a href="https://thekhandev.github.io/portfolio/" target="_blank" rel="noopener noreferrer"
+                    class="text-sky-400 hover:text-sky-200">TheKhanDev</a>
+            </div>
+        </div>
+
+
+
+        <!-- GAME OVER SCREEN -->
+        <div id="game-over-screen" class="hidden absolute inset-0 flex flex-col items-center justify-center z-40 p-6"
+            style="background: radial-gradient(ellipse at center, rgba(0,0,0,0.95) 0%, rgba(2,6,23,0.98) 100%);">
+            <div class="w-full max-w-sm mx-auto slide-up text-center">
+                <div class="mb-6">
+                    <div class="text-7xl mb-4">💀</div>
+                    <h2 id="roast-title" class="text-red-500 text-5xl font-black mb-3 uppercase italic font-retro">PACK
+                        UP!</h2>
+                    <p id="roast-message"
+                        class="text-white text-base leading-relaxed text-slate-300 bg-red-500/10 rounded-2xl p-4 border border-red-500/20">
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 mb-5">
+                    <div class="glass-card p-4 rounded-2xl text-center">
+                        <div class="text-sky-400 text-[10px] font-bold uppercase mb-1">Distance</div>
+                        <div class="flex items-baseline justify-center gap-1">
+                            <span id="final-dist" class="text-3xl font-black text-white">0</span>
+                            <span class="text-slate-500 text-xs">KM</span>
+                        </div>
+                    </div>
+                    <div class="glass-card p-4 rounded-2xl text-center">
+                        <div class="text-yellow-400 text-[10px] font-bold uppercase mb-1">Coins</div>
+                        <div class="flex items-baseline justify-center gap-1">
+                            <span id="final-coins" class="text-3xl font-black text-white">0</span>
+                            <span class="text-slate-500 text-xs">🪙</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="new-highscore-alert"
+                    class="hidden mb-5 bg-gradient-to-r from-yellow-400/20 to-orange-400/20 border border-yellow-400/40 rounded-2xl px-5 py-3 text-yellow-400 font-black uppercase text-sm tracking-widest animate-pulse">
+                    ⭐ NEW HIGH SCORE! ⭐
+                </div>
+
+                <div id="fail-counter-display" class="mb-4 text-slate-400 text-sm">
+                    Fails: <span id="fail-count-text" class="text-red-400 font-bold">0</span>/3 -
+                    <span id="reel-indicator" class="text-yellow-400">Next fail shows a funny reel! 🎬</span>
+                </div>
+
+                <button onclick="startGame()"
+                    class="w-full bg-white text-black font-black py-4 rounded-2xl text-lg uppercase active:scale-95 transition-transform shadow-[0_6px_0_#cbd5e1] active:shadow-[0_2px_0_#cbd5e1]">
+                    🔄 Retake Scene
+                </button>
+
+                <button onclick="location.reload()"
+                    class="w-full mt-3 bg-transparent border-2 border-slate-700 text-slate-400 font-bold py-3 rounded-2xl text-sm uppercase active:scale-95 transition-all hover:border-slate-500">
+                    🏠 Main Menu
+                </button>
+            </div>
+        </div>
+
+        <!-- HUD -->
+        <div id="hud" class="hidden absolute top-8 left-4 right-4 flex justify-between pointer-events-none z-30">
+            <div class="glass-card rounded-2xl px-5 py-3 flex items-center gap-3">
+                <div class="w-2 h-2 rounded-full bg-sky-400 animate-pulse"></div>
+                <div>
+                    <div id="dist-display" class="text-xl font-black text-white leading-none">0</div>
+                    <div class="text-sky-400 text-[9px] font-bold uppercase">KM</div>
+                </div>
+            </div>
+            <div class="glass-card rounded-2xl px-5 py-3 flex items-center gap-3">
+                <div class="text-lg">🪙</div>
+                <div>
+                    <div id="coin-display" class="text-xl font-black text-white leading-none">0</div>
+                    <div class="text-yellow-400 text-[9px] font-bold uppercase">COINS</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            // ============ AUTO-LOAD SYSTEM ============
+            // This scans folders and loads whatever files exist
+
+            const REEL_FOLDERS = {
+                urdu: 'assets/reels/urdu/',
+                pashto: 'assets/reels/pashto/'
+            };
+
+            const SOUND_FOLDERS = {
+                urdu: 'assets/sounds/urdu/',
+                pashto: 'assets/sounds/pashto/'
+            };
+
+            // File patterns to match (supports any number of files)
+            const SOUND_PATTERNS = {
+                jump: ['jump1.mp3', 'jump2.mp3', 'jump3.mp3', 'jump4.mp3', 'jump5.mp3',
+                    'jump6.mp3', 'jump7.mp3', 'jump8.mp3', 'jump9.mp3', 'jump10.mp3'],
+                crash: ['crash1.mp3', 'crash2.mp3', 'crash3.mp3', 'crash4.mp3', 'crash5.mp3',
+                    'crash6.mp3', 'crash7.mp3', 'crash8.mp3', 'crash9.mp3', 'crash10.mp3'],
+                bg: ['bg1.mp3', 'bg2.mp3', 'bg3.mp3', 'bg4.mp3', 'bg5.mp3',
+                    'bg6.mp3', 'bg7.mp3', 'bg8.mp3', 'bg9.mp3', 'bg10.mp3'],
+                coin: ['coin1.mp3', 'coin2.mp3', 'coin3.mp3', 'coin4.mp3', 'coin5.mp3',
+                    'coin6.mp3', 'coin7.mp3', 'coin8.mp3', 'coin9.mp3', 'coin10.mp3']
+            };
+
+            const REEL_PATTERNS = Array.from({ length: 50 }, (_, i) => `funny_fail${i + 1}.mp4`);
+
+            // Dynamic arrays that will be populated
+            let urduReels = [];
+            let pashtoReels = [];
+            let currentReels = [];
+
+            let jumpSounds = [];
+            let crashSounds = [];
+            let bgSounds = [];
+            let coinSounds = [];
+
+            // ============ FILE CHECKER ============
+            // Tests if a file exists by trying to load it
+            function checkFileExists(url) {
+                return new Promise((resolve) => {
+                    const xhr = new XMLHttpRequest();
+                    xhr.open('HEAD', url, true);
+                    xhr.onload = () => resolve(xhr.status === 200);
+                    xhr.onerror = () => resolve(false);
+                    xhr.send();
+                });
+            }
+
+            // Scans for all available files in a folder
+            async function scanFiles(baseFolder, patterns) {
+                const existingFiles = [];
+
+                for (const pattern of patterns) {
+                    const url = baseFolder + pattern;
+                    const exists = await checkFileExists(url);
+                    if (exists) {
+                        existingFiles.push(url);
+                    }
+                }
+
+                return existingFiles;
+            }
+
+            // Load all reels for a language
+            async function loadReels(lang) {
+                const baseFolder = REEL_FOLDERS[lang];
+                const foundReels = await scanFiles(baseFolder, REEL_PATTERNS);
+
+                if (foundReels.length === 0) {
+                    // Fallback: use placeholder if no files found
+                    console.warn(`No reels found for ${lang}, using placeholders`);
+                    return [{
+                        src: '',
+                        caption: lang === 'urdu' ? 'Urdu Reel - Add videos to assets/reels/urdu/' : 'Pashto Reel - Add videos to assets/reels/pashto/'
+                    }];
+                }
+
+                return foundReels.map((src, index) => ({
+                    src: src,
+                    caption: lang === 'urdu' ?
+                        `Urdu Funny Reel #${index + 1} 😂` :
+                        `Pashto Funny Reel #${index + 1} 😂`
+                }));
+            }
+
+            // Load all sounds for a language
+            async function loadSounds(lang) {
+                const baseFolder = SOUND_FOLDERS[lang];
+
+                const [jump, crash, bg, coin] = await Promise.all([
+                    scanFiles(baseFolder, SOUND_PATTERNS.jump),
+                    scanFiles(baseFolder, SOUND_PATTERNS.crash),
+                    scanFiles(baseFolder, SOUND_PATTERNS.bg),
+                    scanFiles(baseFolder, SOUND_PATTERNS.coin)
+                ]);
+
+                return {
+                    jump: jump.length > 0 ? jump : ['assets/sounds/default/jump.mp3'],
+                    crash: crash.length > 0 ? crash : ['assets/sounds/default/crash.mp3'],
+                    bg: bg.length > 0 ? bg : ['assets/sounds/default/bg.mp3'],
+                    coin: coin.length > 0 ? coin : ['assets/sounds/default/coin.mp3']
+                };
+            }
+
+            // ============ SOUND POOL ============
+            class SoundPool {
+                constructor(sources = [], poolSize = 3) {
+                    this.sources = sources;
+                    this.pool = [];
+                    this.index = 0;
+
+                    this.updatePool(poolSize);
+                }
+
+                updatePool(poolSize) {
+                    this.pool = [];
+                    for (let i = 0; i < poolSize; i++) {
+                        const audio = new Audio();
+                        audio.preload = 'auto';
+                        this.pool.push(audio);
+                    }
+                }
+
+                setSources(sources) {
+                    this.sources = sources;
+                }
+
+                play(volume = 1.0, loop = false) {
+                    if (!this.sources || this.sources.length === 0) return null;
+
+                    const audio = this.pool[this.index];
+                    const randomSource = this.sources[Math.floor(Math.random() * this.sources.length)];
+
+                    audio.volume = volume;
+                    audio.loop = loop;
+                    audio.src = randomSource;
+                    audio.currentTime = 0;
+                    audio.play().catch(() => { });
+
+                    this.index = (this.index + 1) % this.pool.length;
+                    return audio;
+                }
+
+                stopAll() {
+                    this.pool.forEach(audio => {
+                        audio.pause();
+                        audio.currentTime = 0;
+                    });
+                }
+            }
+
+            // ============ INITIALIZE POOLS ============
+            let jumpSoundPool = new SoundPool();
+            let crashSoundPool = new SoundPool();
+            let bgSoundPool = new SoundPool();
+            let coinSoundPool = new SoundPool();
+
+            async function createSoundPools() {
+                const sounds = await loadSounds(selectedLanguage);
+
+                jumpSoundPool.setSources(sounds.jump);
+                crashSoundPool.setSources(sounds.crash);
+                bgSoundPool.setSources(sounds.bg);
+                coinSoundPool.setSources(sounds.coin);
+
+                jumpSoundPool.updatePool(Math.min(sounds.jump.length + 2, 8));
+                crashSoundPool.updatePool(Math.min(sounds.crash.length + 2, 8));
+                bgSoundPool.updatePool(Math.min(sounds.bg.length + 2, 5));
+                coinSoundPool.updatePool(Math.min(sounds.coin.length + 2, 10));
+
+                console.log(`Loaded ${selectedLanguage} sounds:`, {
+                    jump: sounds.jump.length,
+                    crash: sounds.crash.length,
+                    bg: sounds.bg.length,
+                    coin: sounds.coin.length
+                });
+            }
+
+            // ============ LANGUAGE RESPONSES ============
+            const URDU_RESPONSES = [
+                `Oye {name}! Acting chor do, bhagna tumhare bas ka nahi! 🤣`,
+                `Fahhhhh! {name} ka fuel khatam ho gaya! ⛽`,
+                `Kya hua {name}? Road ko pappi kyun di? 💋`,
+                `Action Cut! {name} ki performance bohat gandi thi. 🎬`,
+                `{name} tumse na ho payega! 😂`,
+                `Arey {name}, itna bura performance pehle kabhi nahi dekha!`,
+                `{name} bhaag milkha bhaag... lekin gir gaya! 🤦`,
+                `Shabash {name}! {dist}m door tak bhaag ke gir gaye!`,
+                `{name} teri running dekh ke mujeh sharam aa gayi! 🫣`,
+                `Director sahab ne {name} ko nikal diya film se! 🎥`,
+                `{name} tumhara stunt dekh ke camera hans pada! 😆`,
+                `Teri acting dekh ke director soch raha hai, 'Yeh hero ya villain?'`,
+                `Bas {name}! Agli baar ada karna, actor banna nahi. 😜`,
+                `Teri speed dekh ke gaadi bhi brake laga legi! 🚗`,
+                `Oscar nahi milega, bas halki si chappal zaroor milegi. 🩴`
+            ];
+
+            const PASHTO_RESPONSES = [
+                `Oye {name}! Acting prate de, da bhag ne she! 🤣`,
+                `Fahhhhh! {name} da tael khatam shu! ⛽`,
+                `Sa shwe {name}? Sarak ta mekach wa khor? 💋`,
+                `Action Cut! {name} da karkardagi der kharab wa. 🎬`,
+                `{name} ta na she kedal! 😂`,
+                `Arey {name}, domra kharab tamasha ma qat na lid!`,
+                `{name} wakhta wakhta... kho wlared! 🤦`,
+                `Afarin {name}! {dist}m lare wakhta ao biya wlared!`,
+                `{name} sta da wagah awezo ma sharam wakhr! 🫣`,
+                `Director sahib {name} film na wwisto! 🎥`,
+                `Da zra na staso pa movies key ye da daana kegi!`,
+                `Da mukh pa maske bande staso kharabi raora! 😂`,
+                `Sta movie da comedy da taraf ta dee, drama na!`,
+                `Hasee agha da che taakh ba da zra na wakhli. 😜`,
+                `Sta race dekh ke malgari wee: 'Za na ghat shom'.`
+            ];
+
+            let selectedLanguage = 'urdu';
+            let failCount = 0;
+            let currentReelIndex = 0;
+            let reelVideo = null;
+            let bgMusicAudio = null;
+
+            // ============ CANVAS SETUP ============
+            const canvas = document.getElementById('game');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 500;
+            canvas.height = 900;
+
+            // ============ GAME STATE ============
+            let playerName = "", gameState = 'start';
+            let coins = 0, distance = 0, frame = 0, speed = 5;
+            let player = { x: 80, y: 750, vy: 0, w: 60, h: 110, ground: 750 };
+            let obstacles = [], coinItems = [], clouds = [], buildings = [], cityProps = [];
+
+            // ============ HIGH SCORE ============
+            const STORAGE_KEY = 'cityActorHighScore';
+            function getSavedHighScore() {
+                try { const s = localStorage.getItem(STORAGE_KEY); return s ? parseInt(s, 10) : 0; } catch (e) { return 0; }
+            }
+            function saveHighScore(score) {
+                try { localStorage.setItem(STORAGE_KEY, Math.floor(score)); } catch (e) { }
+            }
+            function updateHighScoreDisplay() {
+                document.getElementById('high-score-value').innerText = getSavedHighScore();
+            }
+
+            // ============ REEL SYSTEM ============
+            function initReelSystem() {
+                reelVideo = document.getElementById('reel-video');
+                reelVideo.preload = 'auto';
+            }
+
+            function playRandomReel() {
+                const reelContainer = document.getElementById('reel-container');
+
+                if (currentReels.length === 0) {
+                    console.warn('No reels available');
+                    skipReel();
+                    return;
+                }
+
+                currentReelIndex = Math.floor(Math.random() * currentReels.length);
+                const reel = currentReels[currentReelIndex];
+
+                if (!reel.src) {
+                    skipReel();
+                    return;
+                }
+
+                reelVideo.src = reel.src;
+                reelVideo.load();
+
+                const playPromise = reelVideo.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(() => {
+                        document.getElementById('reel-caption').innerText = reel.caption;
+                        document.getElementById('reel-lang-indicator').innerText =
+                            selectedLanguage === 'pashto' ? '🎬 Pashto Reel' : '🎬 Urdu Reel';
+                        reelContainer.style.display = 'block';
+                    }).catch(() => {
+                        document.getElementById('reel-caption').innerText = reel.caption;
+                        reelContainer.style.display = 'block';
+                    });
+                }
+
+                setTimeout(() => {
+                    if (reelContainer.style.display === 'block') {
+                        skipReel();
+                    }
+                }, 20000);
+            }
+
+            window.skipReel = function () {
+                const reelContainer = document.getElementById('reel-container');
+                reelVideo.pause();
+                reelVideo.currentTime = 0;
+                reelContainer.style.display = 'none';
+                failCount = 0;
+                updateFailDisplay();
+                startGame();
+            };
+
+            window.likeReel = function () {
+                if (navigator.vibrate) navigator.vibrate(50);
+            };
+
+            window.shareReel = function () {
+                if (navigator.share) {
+                    navigator.share({
+                        title: 'Funny Fail Reel',
+                        text: currentReels[currentReelIndex]?.caption || 'Check out this funny fail!',
+                    }).catch(() => { });
+                }
+            };
+
+            function incrementFailCount() {
+                failCount++;
+                updateFailDisplay();
+
+                if (failCount >= 3) {
+                    setTimeout(() => playRandomReel(), 500);
+                }
+            }
+
+            function updateFailDisplay() {
+                const failCountText = document.getElementById('fail-count-text');
+                const reelIndicator = document.getElementById('reel-indicator');
+
+                if (failCountText) failCountText.innerText = failCount;
+
+                if (reelIndicator) {
+                    if (failCount >= 3) {
+                        reelIndicator.innerText = '🎬 Showing reel...';
+                        reelIndicator.className = 'text-green-400 font-bold animate-pulse';
+                    } else if (failCount >= 2) {
+                        reelIndicator.innerText = '⚠️ One more fail = Funny Reel!';
+                        reelIndicator.className = 'text-red-400 font-bold animate-pulse';
+                    } else {
+                        reelIndicator.innerText = `${3 - failCount} fails until funny reel! 🎬`;
+                        reelIndicator.className = 'text-yellow-400';
+                    }
+                }
+            }
+
+            // ============ INSTANT SOUND PLAYBACK ============
+            function playJumpSound() { jumpSoundPool.play(0.9, false); }
+            function playCrashSound() { crashSoundPool.play(1.0, false); }
+            function playCoinSound() { coinSoundPool.play(0.8, false); }
+
+            function playBGSound() {
+                bgMusicAudio = bgSoundPool.play(0.8, true);
+            }
+
+            function stopBGSound() {
+                bgSoundPool.stopAll();
+            }
+
+            // ============ LANGUAGE SELECTION ============
+            window.selectLanguage = async function (lang) {
+                selectedLanguage = lang;
+
+                document.getElementById('lang-urdu').classList.remove('active', 'border-sky-500', 'text-white');
+                document.getElementById('lang-pashto').classList.remove('active', 'border-sky-500', 'text-white');
+                document.getElementById('lang-urdu').classList.add('border-slate-600', 'text-slate-400');
+                document.getElementById('lang-pashto').classList.add('border-slate-600', 'text-slate-400');
+
+                const activeBtn = document.getElementById(`lang-${lang}`);
+                activeBtn.classList.add('active', 'border-sky-500', 'text-white');
+                activeBtn.classList.remove('border-slate-600', 'text-slate-400');
+
+                // Reload sounds and reels for new language
+                currentReels = await loadReels(lang);
+                await createSoundPools();
+
+                console.log(`Switched to ${lang}: ${currentReels.length} reels loaded`);
+            };
+
+            // ============ CITY GENERATION ============
+            function generateCity() {
+                buildings = [];
+                for (let i = 0; i < 12; i++) {
+                    let x = i * 90 + Math.random() * 30;
+                    let w = 60 + Math.random() * 80;
+                    let h = 180 + Math.random() * 280;
+                    buildings.push({ x, w, h, color: `hsl(${220 + Math.random() * 30}, 20%, ${15 + Math.random() * 15}%)` });
+                }
+                clouds = Array.from({ length: 5 }, () => ({
+                    x: Math.random() * 500,
+                    y: 30 + Math.random() * 160,
+                    s: 0.2 + Math.random() * 0.5,
+                }));
+                cityProps = [];
+                for (let i = 0; i < 8; i++) {
+                    cityProps.push({ x: Math.random() * 500, y: player.ground - 10 - Math.random() * 15, type: Math.random() > 0.5 ? 'hydrant' : 'trash' });
+                }
+            }
+
+            // ============ ROAST MESSAGES ============
+            function getRoasts(name, dist, coinCount) {
+                const responses = selectedLanguage === 'pashto' ? PASHTO_RESPONSES : URDU_RESPONSES;
+                const template = responses[Math.floor(Math.random() * responses.length)];
+                return template.replace('{name}', name).replace('{dist}', dist);
+            }
+
+            // ============ INIT / START ============
+            async function initGame() {
+                playerName = document.getElementById('player-name').value.trim() || "Waqas";
+
+                // Load reels and sounds
+                currentReels = await loadReels(selectedLanguage);
+                await createSoundPools();
+
+                generateCity();
+                updateHighScoreDisplay();
+                startGame();
+            }
+
+            function startGame() {
+                gameState = 'play';
+                coins = 0; distance = 0; frame = 0; speed = 5;
+                obstacles = []; coinItems = [];
+                player.y = player.ground; player.vy = 0;
+
+                document.getElementById('start-screen').classList.add('hidden');
+                document.getElementById('game-over-screen').classList.add('hidden');
+                document.getElementById('hud').classList.remove('hidden');
+                document.getElementById('new-highscore-alert').classList.add('hidden');
+
+                updateFailDisplay();
+                stopBGSound();
+                playBGSound();
+                gameLoop();
+            }
+
+            function gameOver() {
+                if (gameState !== 'play') return;
+                gameState = 'over';
+
+                stopBGSound();
+                playCrashSound();
+
+                incrementFailCount();
+
+                const finalDist = Math.floor(distance);
+                const prevHigh = getSavedHighScore();
+                let newHigh = false;
+                if (finalDist > prevHigh) {
+                    saveHighScore(finalDist);
+                    updateHighScoreDisplay();
+                    newHigh = true;
+                }
+
+                const roastMsg = getRoasts(playerName, finalDist, coins);
+                document.getElementById('roast-title').innerText = "PACK UP!";
+                document.getElementById('roast-message').innerText = roastMsg;
+                document.getElementById('final-dist').innerText = finalDist;
+                document.getElementById('final-coins').innerText = coins;
+                document.getElementById('new-highscore-alert').classList.toggle('hidden', !newHigh);
+                document.getElementById('game-over-screen').classList.remove('hidden');
+                document.getElementById('hud').classList.add('hidden');
+            }
+
+            // ============ BACKGROUND THEME ============
+            function getBackgroundTheme() {
+                if (distance < 250) return { name: 'dawn', sky: '#60a5fa', road: '#475569', building: '#1e293b', cloudAlpha: 0.7 };
+                else if (distance < 600) return { name: 'afternoon', sky: '#f97316', road: '#334155', building: '#0f172a', cloudAlpha: 0.5 };
+                else if (distance < 1000) return { name: 'sunset', sky: '#7c2d12', road: '#1e1b4b', building: '#020617', cloudAlpha: 0.4 };
+                else if (distance < 1500) return { name: 'night', sky: '#0f172a', road: '#020617', building: '#000000', cloudAlpha: 0.2 };
+                else return { name: 'midnight', sky: '#030712', road: '#000000', building: '#000000', cloudAlpha: 0.1 };
+            }
+
+            // ============ UPDATE ============
+            function update() {
+                if (gameState !== 'play') return;
+                frame++;
+                distance += speed / 40;
+                if (frame % 240 === 0 && speed < 18) speed += 0.4;
+                document.getElementById('dist-display').innerText = Math.floor(distance);
+
+                player.vy += 0.95;
+                player.y += player.vy;
+                if (player.y > player.ground) { player.y = player.ground; player.vy = 0; }
+
+                if (frame % Math.max(35, 80 - Math.floor(speed * 2)) === 0) {
+                    obstacles.push({ x: 550, y: player.ground - 50, w: 50, h: 50 });
+                }
+                if (frame % 60 === 0) {
+                    coinItems.push({ x: 550, y: 450 + Math.random() * 250, r: 18 });
+                }
+
+                for (let i = obstacles.length - 1; i >= 0; i--) {
+                    const o = obstacles[i];
+                    o.x -= speed;
+                    if (o.x < -100) { obstacles.splice(i, 1); continue; }
+                    if (player.x + 15 < o.x + o.w && player.x + player.w - 15 > o.x &&
+                        player.y - player.h + 10 < o.y + o.h && player.y > o.y) { gameOver(); return; }
+                }
+
+                for (let i = coinItems.length - 1; i >= 0; i--) {
+                    const c = coinItems[i];
+                    c.x -= speed;
+                    if (c.x < -50) { coinItems.splice(i, 1); continue; }
+                    const dx = (player.x + 30) - c.x;
+                    const dy = (player.y - 55) - c.y;
+                    if (Math.sqrt(dx * dx + dy * dy) < 55) {
+                        coins++;
+                        coinItems.splice(i, 1);
+                        document.getElementById('coin-display').innerText = coins;
+                        playCoinSound();
+                    }
+                }
+
+                buildings.forEach(b => { b.x -= speed * 0.4; if (b.x < -200) b.x = 600; });
+                clouds.forEach(c => { c.x -= c.s + speed * 0.1; if (c.x < -200) c.x = 600; });
+                cityProps.forEach(p => { p.x -= speed * 0.7; if (p.x < -50) p.x = 550 + Math.random() * 100; });
+            }
+
+            // ============ DRAW ============
+            function draw() {
+                const theme = getBackgroundTheme();
+
+                const grad = ctx.createLinearGradient(0, 0, 0, player.ground);
+                grad.addColorStop(0, theme.sky);
+                grad.addColorStop(1, theme.building);
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, 500, player.ground);
+
+                ctx.fillStyle = `rgba(255,255,255,${theme.cloudAlpha})`;
+                clouds.forEach(c => {
+                    ctx.beginPath();
+                    ctx.arc(c.x, c.y, 30, 0, Math.PI * 2);
+                    ctx.arc(c.x + 30, c.y - 15, 40, 0, Math.PI * 2);
+                    ctx.arc(c.x + 60, c.y, 30, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+
+                ctx.fillStyle = theme.building;
+                buildings.forEach(b => ctx.fillRect(b.x, player.ground - b.h, b.w, b.h));
+
+                buildings.forEach(b => {
+                    ctx.fillStyle = 'rgba(255,255,200,0.3)';
+                    for (let wy = player.ground - b.h + 15; wy < player.ground - 15; wy += 20) {
+                        for (let wx = b.x + 10; wx < b.x + b.w - 15; wx += 16) {
+                            if (Math.random() > 0.5) ctx.fillRect(wx, wy, 5, 7);
+                        }
+                    }
+                });
+
+                ctx.fillStyle = theme.road;
+                ctx.fillRect(0, player.ground, 500, 150);
+                ctx.fillStyle = '#94a3b8';
+                ctx.fillRect(0, player.ground - 4, 500, 8);
+
+                ctx.fillStyle = '#fbbf24';
+                for (let i = 0; i < 12; i++) {
+                    let lx = (i * 60 + (frame * speed * 0.6) % 60) % 600 - 100;
+                    ctx.fillRect(lx, player.ground + 40, 35, 6);
+                }
+
+                ctx.fillStyle = '#64748b';
+                for (let i = 0; i < 8; i++) {
+                    let bx = (i * 80 + (frame * speed * 0.5) % 80) % 600 - 100;
+                    ctx.fillRect(bx, player.ground + 65, 55, 25);
+                    ctx.fillStyle = '#475569';
+                    ctx.fillRect(bx + 4, player.ground + 68, 47, 19);
+                    ctx.fillStyle = '#64748b';
+                }
+
+                cityProps.forEach(p => {
+                    if (p.type === 'hydrant') {
+                        ctx.fillStyle = '#dc2626';
+                        ctx.fillRect(p.x, p.y - 14, 15, 22);
+                        ctx.fillStyle = '#b91c1c';
+                        ctx.fillRect(p.x - 2, p.y - 6, 19, 6);
+                    } else {
+                        ctx.fillStyle = '#78716c';
+                        ctx.fillRect(p.x, p.y - 16, 16, 24);
+                        ctx.fillStyle = '#57534e';
+                        ctx.fillRect(p.x + 2, p.y - 18, 12, 4);
+                    }
+                });
+
+                ctx.fillStyle = 'rgba(255,255,255,0.1)';
+                ctx.fillRect(0, player.ground, 500, 10);
+
+                const leg = Math.sin(frame * 0.22) * 18;
+                ctx.fillStyle = '#ffdbac';
+                ctx.beginPath();
+                ctx.arc(player.x + 30, player.y - 105, 20, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#1a1a1a';
+                ctx.beginPath();
+                ctx.arc(player.x + 30, player.y - 110, 21, Math.PI, 0);
+                ctx.fill();
+                ctx.fillStyle = '#000';
+                ctx.beginPath();
+                ctx.arc(player.x + 24, player.y - 108, 3, 0, Math.PI * 2);
+                ctx.arc(player.x + 37, player.y - 108, 3, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(player.x + 30, player.y - 98, 7, 0, Math.PI);
+                ctx.stroke();
+                ctx.fillStyle = '#f8fafc';
+                ctx.fillRect(player.x + 10, player.y - 85, 40, 55);
+                ctx.fillStyle = '#e2e8f0';
+                ctx.beginPath();
+                ctx.moveTo(player.x + 20, player.y - 85);
+                ctx.lineTo(player.x + 30, player.y - 75);
+                ctx.lineTo(player.x + 40, player.y - 85);
+                ctx.fill();
+                ctx.fillStyle = '#78350f';
+                ctx.fillRect(player.x + 10, player.y - 33, 40, 5);
+                ctx.fillStyle = '#0f172a';
+                ctx.fillRect(player.x + 12, player.y - 30, 16, 30 + leg);
+                ctx.fillRect(player.x + 32, player.y - 30, 16, 30 - leg);
+                ctx.fillStyle = '#1a1a1a';
+                ctx.fillRect(player.x + 8, player.y - 2 + Math.max(0, leg), 22, 8);
+                ctx.fillRect(player.x + 30, player.y - 2 + Math.max(0, -leg), 22, 8);
+                ctx.fillStyle = '#ffdbac';
+                const armSwing = Math.sin(frame * 0.22) * 12;
+                ctx.fillRect(player.x - 2, player.y - 80 + armSwing, 10, 30);
+                ctx.fillRect(player.x + 52, player.y - 80 - armSwing, 10, 30);
+
+                ctx.fillStyle = '#ef4444';
+                obstacles.forEach(o => {
+                    ctx.fillRect(o.x, o.y, o.w, o.h);
+                    ctx.fillStyle = '#fff';
+                    ctx.fillRect(o.x, o.y + 10, o.w, 10);
+                    ctx.fillRect(o.x + 8, o.y + 20, 12, 12);
+                    ctx.fillRect(o.x + 30, o.y + 20, 12, 12);
+                    ctx.fillStyle = '#ef4444';
+                });
+
+                ctx.fillStyle = '#fbbf24';
+                coinItems.forEach(c => {
+                    const rot = Math.abs(Math.sin(frame * 0.1)) * c.r;
+                    ctx.beginPath();
+                    ctx.ellipse(c.x, c.y, rot, c.r, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    ctx.fillStyle = '#fde047';
+                    ctx.beginPath();
+                    ctx.arc(c.x, c.y, rot * 0.5, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+            }
+
+            function gameLoop() {
+                if (gameState !== 'play') return;
+                update();
+                draw();
+                requestAnimationFrame(gameLoop);
+            }
+
+            const triggerJump = (e) => {
+                if (e) e.preventDefault();
+                if (gameState === 'play' && player.y >= player.ground) {
+                    player.vy = -22;
+                    playJumpSound();
+                }
+            };
+
+            window.addEventListener('keydown', (e) => {
+                if (e.code === 'Space' || e.key === ' ') {
+                    e.preventDefault();
+                    triggerJump();
+                }
+            });
+            canvas.addEventListener('touchstart', triggerJump, { passive: false });
+
+            window.initGame = initGame;
+            window.startGame = startGame;
+
+            // Initialize everything
+            (async function initialize() {
+                initReelSystem();
+                currentReels = await loadReels(selectedLanguage);
+                await createSoundPools();
+                updateHighScoreDisplay();
+                updateFailDisplay();
+                draw();
+
+                console.log('Game initialized!');
+                console.log(`Loaded ${currentReels.length} ${selectedLanguage} reels`);
+                console.log('Add files to folders and they will be auto-detected!');
+            })();
+        })();
+    </script>
+</body>
+
+</html>
