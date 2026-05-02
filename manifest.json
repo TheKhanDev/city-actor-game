@@ -1,0 +1,22 @@
+{
+  "name": "City Actor: Pro Runner",
+  "short_name": "City Actor",
+  "description": "A realistic runner game",
+  "start_url": "/city-actor-game/",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#0ea5e9",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
