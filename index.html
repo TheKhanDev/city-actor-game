@@ -3,6 +3,14 @@
 
 <head>
     <meta charset="UTF-8">
+    <link rel="manifest" href="data:application/json,{"name":"City%20Actor","short_name":"City%20Actor","start_url":"/city-actor-game/","display":"standalone","background_color":"%23020617","theme_color":"%230ea5e9"}">
+    <!-- Add these meta tags in <head> -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="City Actor">
+    <meta name="theme-color" content="#020617">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
     <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>City Actor: Pro Runner Funny game</title>
@@ -258,6 +266,19 @@
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
         }
 
+        .loading-spinner {
+            width: 56px;
+            height: 56px;
+            border: 5px solid rgba(255, 255, 255, 0.15);
+            border-top-color: #22d3ee;
+            border-radius: 9999px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
         .neon-text {
             text-shadow: 0 0 20px rgba(14, 165, 233, 0.5), 0 0 40px rgba(14, 165, 233, 0.3);
         }
@@ -276,6 +297,42 @@
                 opacity: 1;
                 transform: translateY(0);
             }
+        }
+
+        .start-animation-panel {
+            position: absolute;
+            inset: 0;
+            z-index: 60;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 16px;
+            background: rgba(2, 6, 23, 0.96);
+            backdrop-filter: blur(16px);
+        }
+
+        .start-animation-circle {
+            width: 88px;
+            height: 88px;
+            border-radius: 9999px;
+            border: 4px solid rgba(14, 165, 233, 0.28);
+            box-shadow: 0 0 24px rgba(14, 165, 233, 0.25);
+            animation: spinGlow 1s linear infinite;
+        }
+
+        .start-animation-text {
+            color: #ffffff;
+            font-size: 1rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.25em;
+        }
+
+        @keyframes spinGlow {
+            0% { transform: rotate(0deg) scale(0.98); opacity: 0.85; }
+            50% { transform: rotate(180deg) scale(1.05); opacity: 1; }
+            100% { transform: rotate(360deg) scale(0.98); opacity: 0.85; }
         }
     </style>
 </head>
@@ -333,10 +390,22 @@
                         class="w-full p-4 rounded-2xl bg-slate-800/60 border-2 border-slate-700 text-white text-center outline-none focus:border-sky-500 text-base font-bold uppercase backdrop-blur-sm transition-all placeholder:text-slate-500">
                 </div>
 
-                <button onclick="initGame()"
+                <button id="start-button" onclick="initGame()"
                     class="w-full bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-black py-5 rounded-2xl shadow-[0_8px_0_#0369a1] active:translate-y-1 active:shadow-[0_4px_0_#0369a1] transition-all text-xl uppercase tracking-wider">
                     ▶ START ACTION
                 </button>
+
+                <div id="start-animation-panel" class="hidden start-animation-panel">
+                    <div class="start-animation-circle"></div>
+                    <p class="start-animation-text">ACTION STARTING...</p>
+                </div>
+
+                <div id="loading-overlay" class="hidden absolute inset-0 z-60 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm rounded-3xl px-6">
+                    <div class="flex flex-col items-center gap-3">
+                        <div class="loading-spinner"></div>
+                        <p class="text-white text-sm uppercase tracking-[0.35em]">Loading game...</p>
+                    </div>
+                </div>
 
                 <div class="mt-6 glass-card rounded-2xl p-4 flex items-center justify-between">
                     <div class="flex items-center gap-2">
@@ -835,16 +904,71 @@
             }
 
             // ============ INIT / START ============
+            const startButton = document.getElementById('start-button');
+            const loadingOverlay = document.getElementById('loading-overlay');
+
+            function showLoadingOverlay() {
+                if (loadingOverlay) loadingOverlay.classList.remove('hidden');
+                if (startButton) {
+                    startButton.disabled = true;
+                    startButton.innerText = 'LOADING...';
+                    startButton.classList.add('opacity-60', 'cursor-not-allowed');
+                }
+            }
+
+            function hideLoadingOverlay() {
+                if (loadingOverlay) loadingOverlay.classList.add('hidden');
+                if (startButton) {
+                    startButton.disabled = false;
+                    startButton.innerText = '▶ START ACTION';
+                    startButton.classList.remove('opacity-60', 'cursor-not-allowed');
+                }
+            }
+
+            function wait(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+
+            function showStartIntro() {
+                const introPanel = document.getElementById('start-animation-panel');
+                if (introPanel) introPanel.classList.remove('hidden');
+            }
+
+            function hideStartIntro() {
+                const introPanel = document.getElementById('start-animation-panel');
+                if (introPanel) introPanel.classList.add('hidden');
+            }
+
+            async function playStartAnimation() {
+                if (!startButton) return;
+
+                startButton.disabled = true;
+                startButton.innerText = 'GET SET...';
+                showStartIntro();
+
+                await wait(700);
+                startButton.innerText = 'STARTING...';
+                await wait(250);
+                hideStartIntro();
+            }
+
             async function initGame() {
+                showLoadingOverlay();
                 playerName = document.getElementById('player-name').value.trim() || "Waqas";
 
-                // Load reels and sounds
-                currentReels = await loadReels(selectedLanguage);
-                await createSoundPools();
+                try {
+                    // Load reels and sounds
+                    currentReels = await loadReels(selectedLanguage);
+                    await createSoundPools();
 
-                generateCity();
-                updateHighScoreDisplay();
-                startGame();
+                    generateCity();
+                    updateHighScoreDisplay();
+                    hideLoadingOverlay();
+                    await playStartAnimation();
+                    startGame();
+                } finally {
+                    hideLoadingOverlay();
+                }
             }
 
             function startGame() {
@@ -1121,6 +1245,9 @@
                 console.log('Add files to folders and they will be auto-detected!');
             })();
         })();
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/city-actor-game/sw.js');
+        }
     </script>
 </body>
 
